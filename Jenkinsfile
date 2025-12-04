@@ -9,39 +9,59 @@ pipeline {
 
     stages {
 
-        stage('Build docker image') {
+        stage('Checkout Source') {
             steps {
-                sh 'sudo docker build -t $IMAGE_NAME:$BUILD_NUMBER .'
+                checkout scm
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                  docker build \
+                    -t ${IMAGE_NAME}:${BUILD_NUMBER} \
+                    -f tomcat/Dockerfile .
+                '''
             }
         }
 
         stage('Login to Docker Hub') {
             steps {
                 sh '''
-                  echo $DOCKERHUB_CREDENTIALS_PSW | \
-                  sudo docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                  echo ${DOCKERHUB_CREDENTIALS_PSW} | \
+                  docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin
                 '''
             }
         }
 
-        stage('Push image') {
-            steps {
-                sh 'sudo docker push $IMAGE_NAME:$BUILD_NUMBER'
-            }
-        }
-
-        stage('Run container') {
+        stage('Push Docker Image') {
             steps {
                 sh '''
-                  sudo docker stop $CONTAINER_NAME || true
-                  sudo docker rm $CONTAINER_NAME || true
-
-                  sudo docker run -d \
-                    --name $CONTAINER_NAME \
-                    -p 8081:8080 \
-                    $IMAGE_NAME:$BUILD_NUMBER
+                  docker push ${IMAGE_NAME}:${BUILD_NUMBER}
+                  docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest
+                  docker push ${IMAGE_NAME}:latest
                 '''
             }
+        }
+
+        stage('Run Container') {
+            steps {
+                sh '''
+                  docker stop ${CONTAINER_NAME} || true
+                  docker rm ${CONTAINER_NAME} || true
+
+                  docker run -d \
+                    --name ${CONTAINER_NAME} \
+                    -p 8081:8080 \
+                    ${IMAGE_NAME}:${BUILD_NUMBER}
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker logout || true'
         }
     }
 }
