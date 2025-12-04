@@ -1,8 +1,9 @@
-version: "3.9"
+version: "2.2"
 
 services:
   mysql:
     image: mysql:8.0
+    container_name: mysql-db
     environment:
       MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: sampledb
@@ -15,12 +16,13 @@ services:
     build:
       context: .
       dockerfile: tomcat/Dockerfile
+    container_name: tomcat-app
     ports:
       - "8080:8080"
     depends_on:
       - mysql
     volumes:
-      - ./app/sample:/usr/local/tomcat/webapps/sample   # HOT DEPLOY 🚀
+      - ./app/sample:/usr/local/tomcat/webapps/sample
       - tomcat-logs:/usr/local/tomcat/logs
     networks:
       - tomcat-net
@@ -30,3 +32,4 @@ volumes:
 
 networks:
   tomcat-net:
+    driver: bridge

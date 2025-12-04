@@ -22,7 +22,7 @@ RUN curl -fsSL https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.3.0/
     -o /usr/local/tomcat/lib/mysql-connector-j.jar
 
 # Copy JNDI config
-COPY context.xml /usr/local/tomcat/conf/context.xml
+COPY tomcat/context.xml /usr/local/tomcat/conf/context.xml
 
 EXPOSE 8080
 CMD ["bin/catalina.sh", "run"]
