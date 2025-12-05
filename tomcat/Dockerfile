@@ -17,7 +17,7 @@ RUN curl -fsSL https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.3.0/
     -o /usr/local/tomcat/lib/mysql-connector-j.jar
 
 # ✅ COPY APP INTO IMAGE ✅
-COPY app/sample /usr/local/tomcat/webapps/sample
+COPY app/sample/index.jsp /usr/local/tomcat/webapps/sample
 
 COPY tomcat/context.xml /usr/local/tomcat/conf/context.xml
 
