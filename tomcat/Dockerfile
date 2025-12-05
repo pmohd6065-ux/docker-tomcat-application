@@ -17,7 +17,7 @@ RUN curl -fsSL https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.3.0/
     -o /usr/local/tomcat/lib/mysql-connector-j.jar
 
 # ✅ COPY APP INTO IMAGE ✅
-COPY sample.war /usr/local/tomcat/webapps/sample
+COPY . . /usr/local/tomcat/webapps/sample
 
 EXPOSE 8080
 CMD ["bin/catalina.sh", "run"]
