@@ -2,66 +2,42 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
-        IMAGE_NAME = "mohdparvez23/tomcat_app"
-        CONTAINER_NAME = "tomcat-app"
+        DOCKER_CREDS = credentials('dockerhub-creds')
     }
 
     stages {
-
-        stage('Checkout Source') {
+        stage('Build Docker Images') {
             steps {
-                checkout scm
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh '''
-                  docker build \
-                    -t ${IMAGE_NAME}:${BUILD_NUMBER} \
-                    -f tomcat/Dockerfile .
-                '''
+                    sh 'docker-compose build'
+                
             }
         }
 
         stage('Login to Docker Hub') {
             steps {
-                sh '''
-                  echo ${DOCKERHUB_CREDENTIALS_PSW} | \
-                  docker login -u ${DOCKERHUB_CREDENTIALS_USR} --password-stdin
-                '''
+                    sh 'echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin'
             }
         }
 
-        stage('Push Docker Image') {
+        stage('Push Images to Docker Hub') {
             steps {
-                sh '''
-                  docker push ${IMAGE_NAME}:${BUILD_NUMBER}
-                  docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest
-                  docker push ${IMAGE_NAME}:latest
-                '''
+                    sh 'docker-compose push'
             }
         }
 
-        stage('Run Container') {
+        stage('Run Containers') {
             steps {
-                sh '''
-                  docker stop ${CONTAINER_NAME} || true
-                  docker rm ${CONTAINER_NAME} || true
-
-                  docker run -d \
-                    --name ${CONTAINER_NAME} \
-                    -p 8082:8080 \
-                    ${IMAGE_NAME}:${BUILD_NUMBER}
-                '''
+                    sh 'docker-compose up -d'
             }
         }
     }
 
     post {
-        always {
-            sh 'docker logout || true'
+        success {
+            echo '✅ Deployment successful kid! Webapp running on port 8081, MySQL on port 3306.'
+        }
+        failure {
+            echo '❌ Deployment failed idiot. Check Jenkins logs and docker-compose output you fool !!.'
         }
     }
 }
