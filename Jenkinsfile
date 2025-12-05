@@ -2,42 +2,46 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDS = credentials('dockerhub-creds')
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-creds')
+        IMAGE_NAME = "mohdparvez23/my_app"
+        CONTAINER_NAME = "my_app"
     }
 
     stages {
-        stage('Build Docker Images') {
+
+        stage('Build docker image') {
             steps {
-                    sh 'docker-compose build'
-                
+                sh 'sudo docker build -t $IMAGE_NAME:$BUILD_NUMBER .'
             }
         }
 
         stage('Login to Docker Hub') {
             steps {
-                    sh 'echo $DOCKER_CREDS_PSW | docker login -u $DOCKER_CREDS_USR --password-stdin'
+                sh '''
+                  echo $DOCKERHUB_CREDENTIALS_PSW | \
+                  sudo docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin
+                '''
             }
         }
 
-        stage('Push Images to Docker Hub') {
+        stage('Push image') {
             steps {
-                    sh 'docker-compose push'
+                sh 'sudo docker push $IMAGE_NAME:$BUILD_NUMBER'
             }
         }
 
-        stage('Run Containers') {
+        stage('Run container') {
             steps {
-                    sh 'docker-compose up -d'
-            }
-        }
-    }
+                sh '''
+                  sudo docker stop $CONTAINER_NAME || true
+                  sudo docker rm $CONTAINER_NAME || true
 
-    post {
-        success {
-            echo '✅ Deployment successful kid! Webapp running on port 8081, MySQL on port 3306.'
-        }
-        failure {
-            echo '❌ Deployment failed idiot. Check Jenkins logs and docker-compose output you fool !!.'
+                  sudo docker run -d \
+                    --name $CONTAINER_NAME \
+                    -p 8081:8080 \
+                    $IMAGE_NAME:$BUILD_NUMBER
+                '''
+            }
         }
     }
 }
