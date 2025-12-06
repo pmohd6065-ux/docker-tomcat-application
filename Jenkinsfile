@@ -9,7 +9,7 @@ pipeline {
 
     stages {
 
-        stage('Build docker image') {
+        stage('Build docker image') {v
             steps {
                 sh 'sudo docker build -t $IMAGE_NAME:$BUILD_NUMBER .'
             }
